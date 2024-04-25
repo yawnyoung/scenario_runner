@@ -42,6 +42,7 @@ from srunner.tools.scenario_helper import generate_target_waypoint_list_multilan
 
 
 import srunner.tools as sr_tools
+from srunner.tools.tf_conversion import *
 
 EPSILON = 0.001
 
@@ -4364,3 +4365,42 @@ class MovePedestrianWithEgo(AtomicBehavior):
             self._actor.set_location(self._reference_actor.get_location() + added_location)
             self._start_time = GameTime.get_time()
         return new_status
+
+class PedestrianWave(AtomicBehavior):
+    def __init__(self, actor, name="PedestrianWave"):
+        """
+        Setup actor
+        """
+        super().__init__(name)
+        self._actor = actor
+        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        self._start_time = 0
+        self._actor_type = self._actor.type_id.split('.')[0]
+        
+        if self._actor_type == "walker":
+            bone_ctrl_out = self._actor.get_bones().bone_transforms
+            bone_in_tf = [(item.name, item.relative) for item in bone_ctrl_out]
+            for i, item in enumerate(bone_in_tf):
+                if item[0] == "crl_shoulder__R":
+                    ori_tf_mat = carla_transform_to_numpy_matrix(item[1])
+                    print('ori ', ori_tf_mat)
+                    rel_tf_mat = carla_transform_to_numpy_matrix(carla.Transform(rotation=(carla.Rotation(yaw=45))))
+                    print('rel', rel_tf_mat)
+                    # res_tf_mat = np.dot(rel_tf_mat, ori_tf_mat)
+                    res_tf_mat = np.dot(ori_tf_mat, rel_tf_mat)
+                    print('res', res_tf_mat)
+                    bone_in_tf[i] = (item[0], numpy_matrix_to_carla_transform(res_tf_mat))
+            bone_ctrl_in = carla.WalkerBoneControlIn(bone_in_tf)
+            self._actor.set_bones(bone_ctrl_in)
+
+    
+    def initialise(self):
+        self._start_time = GameTime.get_time()
+        super().initialise()
+    
+    def update(self):
+        if self._actor_type != "walker":
+            return py_trees.common.Status.FAILURE
+        self._actor.show_pose()
+        print('show pose')
+        return py_trees.common.Status.RUNNING

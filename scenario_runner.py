@@ -59,8 +59,8 @@ class ScenarioRunner(object):
     ego_vehicles = []
 
     # Tunable parameters
-    client_timeout = 10.0  # in seconds
-    wait_for_world = 20.0  # in seconds
+    client_timeout = 10000000000000.0  # in seconds
+    wait_for_world = 20000.0  # in seconds
     frame_rate = 20.0      # in Hz
 
     # CARLA world and scenario handlers
@@ -204,8 +204,10 @@ class ScenarioRunner(object):
         Spawn or update the ego vehicles
         """
 
+        print("num ego vehicles: {}".format(len(self.ego_vehicles)))
         if not self._args.waitForEgo:
             for vehicle in ego_vehicles:
+                print(vehicle)
                 self.ego_vehicles.append(CarlaDataProvider.request_new_actor(vehicle.model,
                                                                              vehicle.transform,
                                                                              vehicle.rolename,
@@ -392,11 +394,17 @@ class ScenarioRunner(object):
                                          debug_mode=self._args.debug)
             else:
                 scenario_class = self._get_scenario_class_or_fail(config.type)
-                scenario = scenario_class(world=self.world,
-                                          ego_vehicles=self.ego_vehicles,
-                                          config=config,
-                                          randomize=self._args.randomize,
-                                          debug_mode=self._args.debug)
+                if config.type == "PedestrianCrossing":
+                    scenario = scenario_class(world=self.world,
+                                            ego_vehicles=self.ego_vehicles,
+                                            config=config,
+                                            debug_mode=self._args.debug)
+                else:
+                    scenario = scenario_class(world=self.world,
+                                            ego_vehicles=self.ego_vehicles,
+                                            config=config,
+                                            randomize=self._args.randomize,
+                                            debug_mode=self._args.debug)
         except Exception as exception:                  # pylint: disable=broad-except
             print("The scenario cannot be loaded")
             traceback.print_exc()

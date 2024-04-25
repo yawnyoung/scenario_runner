@@ -17,7 +17,8 @@ from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (ActorDestr
                                                                       WaitForever,
                                                                       Idle,
                                                                       ActorTransformSetter,
-                                                                      MovePedestrianWithEgo)
+                                                                      MovePedestrianWithEgo,
+                                                                      PedestrianWave)
 from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (InTriggerDistanceToLocation,
                                                                                InTimeToArrivalToLocation,
@@ -186,8 +187,9 @@ class PedestrianCrossing(BasicScenario):
         for walker_actor, walker_data in zip(self.other_actors, self._walker_data):
             walker_sequence = py_trees.composites.Sequence(name="WalkerCrossing")
             walker_sequence.add_child(Idle(walker_data['idle_time']))
-            walker_sequence.add_child(KeepVelocity(
-                walker_actor, walker_data['speed'], False, walker_data['duration'], walker_data['distance']))
+            # walker_sequence.add_child(KeepVelocity(
+            #     walker_actor, walker_data['speed'], False, walker_data['duration'], walker_data['distance']))
+            walker_sequence.add_child(PedestrianWave(walker_actor))
             walker_sequence.add_child(ActorDestroy(walker_actor, name="DestroyAdversary"))
             walker_sequence.add_child(WaitForever())
 
